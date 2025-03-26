@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#0F172A"/>
+  <!-- BE Letters -->
+  <g fill="#FFFFFF">
+    <!-- B -->
+    <path d="M146 128h120c22.091 0 40 17.909 40 40v32c0 17.673-14.327 32-32 32 17.673 0 32 14.327 32 32v32c0 22.091-17.909 40-40 40H146V128zm40 80h72c11.046 0 20-8.954 20-20s-8.954-20-20-20h-72v40zm0 96h72c11.046 0 20-8.954 20-20s-8.954-20-20-20h-72v40z"/>
+    <!-- E -->
+    <path d="M326 128h120v40H366v72h72v40h-72v72h80v40H326V128z"/>
+  </g>
+</svg> 
