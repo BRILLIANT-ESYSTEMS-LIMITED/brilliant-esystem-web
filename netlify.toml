@@ -1,11 +1,13 @@
 [build]
   command = """
+    node -v && \
     echo "Installing pnpm..." && \
-    npm install -g pnpm && \
+    npm install -g pnpm@latest && \
+    pnpm -v && \
     echo "Installing dependencies..." && \
-    pnpm install --no-frozen-lockfile && \
+    pnpm install --no-frozen-lockfile --shamefully-hoist && \
     echo "Starting build..." && \
-    pnpm run build --verbose
+    NODE_ENV=production pnpm run build
   """
   publish = ".next"
 
@@ -15,7 +17,7 @@
   NODE_VERSION = "18"
   NPM_FLAGS = "--legacy-peer-deps"
   NETLIFY_USE_PNPM = "true"
-  PNPM_FLAGS = "--no-frozen-lockfile --strict-peer-dependencies=false"
+  NODE_ENV = "production"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
