@@ -14,6 +14,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 interface BlogPost {
   id: string
   title: string
+  slug: string
   excerpt: string
   content: string
   created_at: string
@@ -74,10 +75,10 @@ export default function BlogListPage() {
               <p className="text-sm text-muted-foreground mb-4">{post.excerpt}</p>
               <div className="flex justify-end gap-4">
                 <Button variant="outline" asChild>
-                  <Link href={`/blog/${post.id}`}>View</Link>
+                  <Link href={`/blog/${post.slug}`}>View</Link>
                 </Button>
                 <Button asChild>
-                  <Link href={`/admin/blog/edit/${post.id}`}>Edit</Link>
+                  <Link href={`/admin/blog/edit/${post.slug}`}>Edit</Link>
                 </Button>
               </div>
             </CardContent>
