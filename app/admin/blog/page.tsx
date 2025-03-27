@@ -3,24 +3,13 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Edit, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAuth } from "@/contexts/auth-context"
-import { supabase } from "@/lib/supabase/client"
-import { format } from "date-fns"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { toast } from "@/components/ui/use-toast"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Spinner } from "@/components/ui/spinner"
+import { createClient } from "@supabase/supabase-js"
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 interface BlogPost {
   id: string
@@ -28,159 +17,73 @@ interface BlogPost {
   excerpt: string
   content: string
   created_at: string
-  updated_at: string
+  profiles?: {
+    email: string
+    full_name: string | null
+    avatar_url: string | null
+  }
 }
 
-export default function AdminBlogPage() {
-  const { user, isAdmin, isLoading } = useAuth()
+export default function BlogListPage() {
   const router = useRouter()
   const [posts, setPosts] = useState<BlogPost[]>([])
-  const [isLoadingPosts, setIsLoadingPosts] = useState(true)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Redirect if not admin
-    if (!isLoading && (!user || !isAdmin)) {
-      router.push("/")
-      toast({
-        title: "Access Denied",
-        description: "You do not have permission to access this page.",
-        variant: "destructive",
-      })
-    }
-  }, [user, isAdmin, isLoading, router])
-
-  useEffect(() => {
-    async function fetchPosts() {
-      setIsLoadingPosts(true)
-
-      const { data, error } = await supabase.from("blog_posts").select("*").order("created_at", { ascending: false })
+    const fetchPosts = async () => {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey)
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*, profiles(*)")
+        .order("created_at", { ascending: false })
 
       if (error) {
         console.error("Error fetching posts:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load blog posts.",
-          variant: "destructive",
-        })
       } else {
-        setPosts(data as BlogPost[])
+        setPosts(data || [])
       }
-
-      setIsLoadingPosts(false)
+      setLoading(false)
     }
 
-    if (user && isAdmin) {
-      fetchPosts()
-    }
-  }, [user, isAdmin])
+    fetchPosts()
+  }, [])
 
-  const handleDeletePost = async (id: string) => {
-    const { error } = await supabase.from("blog_posts").delete().eq("id", id)
-
-    if (error) {
-      console.error("Error deleting post:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete blog post.",
-        variant: "destructive",
-      })
-    } else {
-      setPosts(posts.filter((post) => post.id !== id))
-      toast({
-        title: "Success",
-        description: "Blog post deleted successfully.",
-      })
-    }
-  }
-
-  if (isLoading || !user || !isAdmin) {
+  if (loading) {
     return (
-      <div className="container py-20">
-        <div className="flex justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        </div>
+      <div className="container py-10 flex justify-center">
+        <Spinner size="lg" />
       </div>
     )
   }
 
   return (
-    <div className="container py-20">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Manage Blog Posts</h1>
+    <div className="container py-10">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Blog Posts</h1>
         <Button asChild>
-          <Link href="/admin/blog/new">
-            <Plus className="mr-2 h-4 w-4" /> New Post
-          </Link>
+          <Link href="/admin/blog/new">New Post</Link>
         </Button>
       </div>
-
-      {isLoadingPosts ? (
-        <div className="flex justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        </div>
-      ) : posts.length === 0 ? (
-        <Card>
-          <CardContent className="py-10">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">No blog posts found.</p>
-              <Button asChild>
-                <Link href="/admin/blog/new">Create your first post</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6">
-          {posts.map((post) => (
-            <Card key={post.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle>{post.title}</CardTitle>
-                    <CardDescription>{format(new Date(post.created_at), "MMMM d, yyyy")}</CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="icon" asChild>
-                      <Link href={`/admin/blog/edit/${post.id}`}>
-                        <Edit className="h-4 w-4" />
-                        <span className="sr-only">Edit</span>
-                      </Link>
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="icon">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the blog post.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeletePost(post.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{post.excerpt}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <div className="grid gap-6">
+        {posts.map((post) => (
+          <Card key={post.id}>
+            <CardHeader>
+              <CardTitle>{post.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">{post.excerpt}</p>
+              <div className="flex justify-end gap-4">
+                <Button variant="outline" asChild>
+                  <Link href={`/blog/${post.id}`}>View</Link>
+                </Button>
+                <Button asChild>
+                  <Link href={`/admin/blog/edit/${post.id}`}>Edit</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }
