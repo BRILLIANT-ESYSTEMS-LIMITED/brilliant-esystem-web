@@ -1,8 +1,8 @@
 [build]
   command = """
     node -v && \
-    echo "Installing pnpm..." && \
-    npm install -g pnpm@latest && \
+    echo "Checking pnpm..." && \
+    npm list -g pnpm || npm install -g pnpm@latest --force && \
     pnpm -v && \
     echo "Installing dependencies..." && \
     pnpm install --no-frozen-lockfile --shamefully-hoist && \
